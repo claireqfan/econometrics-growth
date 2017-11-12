@@ -27,13 +27,13 @@ sd(millions$life)
 sd(millions$primary)
 
 require(ggplot2)
-ggplot(data = millions, aes(x=growth)) + geom_histogram(binwidth = .005) + labs(title = 'Distribution of Growth Rates')
+ggplot(data = millions, aes(x=growth)) + geom_histogram(binwidth = .002) + labs(title = 'Distribution of Growth Rates')
 ggsave("growth_rate_histogram.jpg")
 ggplot(data = millions, aes(x=gdp)) + geom_histogram(binwidth = .1) + labs(title = 'Distribution of GDP per capita')
 ggsave("gdp_histogram.jpg")
 ggplot(data = millions, aes(x=life)) + geom_histogram(binwidth = 1) + labs(title = 'Distribution of life expectancy')
 ggsave("life_expectancy_histogram.jpg")
-ggplot(data = millions, aes(x=primary)) + geom_histogram(binwidth = .05) + labs(title = 'Distribution of Primary School Enrollment Rates')
+ggplot(data = millions, aes(x=primary)) + geom_histogram(binwidth = .02) + labs(title = 'Distribution of Primary School Enrollment Rates')
 ggsave("primary_school_histogram.jpg")
 
 library(moments)
@@ -47,6 +47,7 @@ skewness(millions$primary)
 kurtosis(millions$primary)
 
 ```
+
 ```{r}
 summary(lm(growth~gdp+life+primary, data = millions))
 
