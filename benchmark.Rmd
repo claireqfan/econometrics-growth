@@ -9,11 +9,17 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r message=FALSE, warning=FALSE}
+require(dplyr)
+require(ggplot2)
+library(moments)
+```
+
+Part I
 ```{r}
 library(readr)
 millions <- read_csv("C:/Users/Qiong Fu/compstats/econometrics-growth/millions.csv")
 
-require(dplyr)
 millions <- select(millions, Country, gr56092, gdpsh60l, lifee060, p60)
 names(millions) <- c('Country', 'growth', 'gdp', 'life', 'primary')
 
@@ -26,7 +32,6 @@ sd(millions$gdp)
 sd(millions$life)
 sd(millions$primary)
 
-require(ggplot2)
 ggplot(data = millions, aes(x=growth)) + geom_histogram(binwidth = .002) + labs(title = 'Distribution of Average Growth Rate of GDP/capita, 1960-1992', x='Growth Rate')
 ggsave("growth_rate_histogram.jpg")
 ggplot(data = millions, aes(x=gdp)) + geom_histogram(binwidth = .1) + labs(title = 'Distribution of GDP per capita in 1960', x='log(GDP per capita)')
@@ -36,7 +41,11 @@ ggsave("life_expectancy_histogram.jpg")
 ggplot(data = millions, aes(x=primary)) + geom_histogram(binwidth = .02) + labs(title = 'Distribution of Primary School Enrollment Rates in 1960', x = 'Primary School Enrollment Rate')
 ggsave("primary_school_histogram.jpg")
 
-library(moments)
+ggplot(data = millions, aes(x=Country, y=growth)) + geom_col()
+ggplot(data = millions, aes(x=Country, y=gdp)) + geom_col()
+ggplot(data = millions, aes(x=Country, y=life)) + geom_col()
+ggplot(data = millions, aes(x=Country, y=primary)) + geom_col()
+
 skewness(millions$growth)
 kurtosis(millions$growth)
 skewness(millions$gdp)
@@ -50,6 +59,114 @@ kurtosis(millions$primary)
 
 ```{r}
 summary(lm(growth~gdp+life+primary, data = millions))
+summary(lm(growth~gdp+life, data = millions))
+```
 
+```{r}
+millions <- mutate(millions, primaryNorm = log(primary+1))
+ggplot(data = millions, aes(x=primaryNorm)) + geom_histogram(binwidth = .02) + labs(title = 'Distribution of Primary School Enrollment Rates in 1960', x = 'Primary School Enrollment Rate')
+
+highprimary <- filter(millions, primary>0.95)
+lowprimary <- filter(millions, primary<=0.95)
+
+ggplot(data=highprimary, aes(x=growth)) + geom_histogram(binwidth = .002)
+ggplot(data=lowprimary, aes(x=growth)) + geom_histogram(binwidth = .002)
+
+summary(lm(growth~gdp+life+primary, data = millions))
+summary(lm(growth~gdp+life+primary, data = highprimary))
+summary(lm(growth~gdp+life+primary, data = lowprimary))
+
+summary(lm(growth~gdp+life+primary, data = millions))
+summary(lm(growth~gdp+life, data = millions))
+
+AIC(lm(growth~gdp+life+primary, data = millions))
+AIC(lm(growth~gdp+life, data = millions))
+BIC(lm(growth~gdp+life+primary, data = millions))
+BIC(lm(growth~gdp+life, data = millions))
+```
+
+Part II
+```{r}
+library(readr)
+millions2 <- read_csv("C:/Users/Qiong Fu/compstats/econometrics-growth/millions.csv")
+
+millions2 <- select(millions2, Country, gr56092, gdpsh60l, lifee060, p60, EcOrg, YrsOpen, OthFrac, BMS6087, SCOUT, bmp1, freeop, freetar, URB60, FRAC)
+names(millions2) <- c("country", "growth", "gdp", "life", "primary", "capitalism", "yrsopen", "otherlang", "bmp_sd", "outward", "bmp", "open", "tariffs", "urbrate", "ethnoling")
+
+summary(select(millions2, -c(country, growth, gdp, life, primary)))
+
+skewness(na.omit(millions2$capitalism))
+skewness(na.omit(millions2$yrsopen))
+
+kurtosis(na.omit(millions2$capitalism))
+kurtosis(na.omit(millions2$yrsopen))
+kurtosis(na.omit(millions2$bmp))
+kurtosis(na.omit(millions2$bmp_sd))
+kurtosis(na.omit(millions2$outward))
+kurtosis(na.omit(millions2$open))
+kurtosis(na.omit(millions2$tariffs))
+kurtosis(na.omit(millions2$otherlang))
+kurtosis(na.omit(millions2$urbrate))
+kurtosis(na.omit(millions2$ethnoling))
+
+ggplot(data=millions2, aes(x=country, y=bmp)) + geom_point()
+ggplot(data=millions2, aes(x=bmp)) + geom_histogram(binwidth = .05)
+#outliers: Zaire, Yugoslavia
+millions2 <- mutate(millions2, bmp = ifelse(bmp>1.8, NA, bmp)) 
+ggplot(data=millions2, aes(x=bmp)) + geom_histogram(binwidth = .05)
+kurtosis(na.omit(millions2$bmp))
+
+ggplot(data=millions2, aes(x=country, y=bmp_sd)) + geom_point()
+ggplot(data=millions2, aes(x=bmp_sd)) + geom_histogram(binwidth = 10)
+#outlier: Algeria, Ghana, Mozambique, Uganda, Bolivia, Chile, Sri Lanka
+millions2 <- mutate(millions2, bmp_sd = ifelse(bmp_sd>150, NA, bmp_sd)) 
+ggplot(data=millions2, aes(x=bmp_sd)) + geom_histogram(binwidth = 10)
+kurtosis(na.omit(millions2$bmp_sd))
+
+skewness(na.omit(millions2$capitalism))
+skewness(na.omit(millions2$yrsopen))
+skewness(na.omit(millions2$bmp))
+skewness(na.omit(millions2$bmp_sd))
+skewness(na.omit(millions2$outward))
+skewness(na.omit(millions2$open))
+skewness(na.omit(millions2$tariffs))
+skewness(na.omit(millions2$otherlang))
+skewness(na.omit(millions2$urbrate))
+skewness(na.omit(millions2$ethnoling))
+ggplot(data=millions2, aes(x=tariffs)) + geom_histogram(binwidth = 0.005)
+
+millions2 <- mutate(millions2, bmpLog = log(1+bmp)) %>%
+  mutate(bmp_sdLog = log(1+bmp_sd)) %>%
+  mutate(tariffsLog = log(1+tariffs))
+ggplot(data=millions2, aes(x=tariffsLog)) + geom_histogram(binwidth = 0.005)
+skewness(na.omit(millions2$tariffsLog))
+skewness(na.omit(millions2$bmpLog))
+skewness(na.omit(millions2$bmp_sdLog))
+
+
+```
+
+```{r}
+summary(lm(growth~gdp+life, data=millions2))
+summary(lm(growth~gdp+life+capitalism, data=millions2))
+
+```
+
+```{r}
+library(readr)
+inequality <- read_csv("C:/Users/Qiong Fu/compstats/econometrics-growth/income-inequality-and-growth-in-european-sub-national-regions.csv")
+
+names(inequality)[4:5] = c("gini", "growth")
+gini <- filter(inequality, !is.na(gini))
+growth <- filter(inequality, !is.na(growth))
+inequality <- left_join(gini, growth, by="Entity")
+inequality <- select(inequality, c(Entity, gini.x, growth.y))
+names(inequality) <- c("entity", "gini","growth")
+
+inequality$gini <- as.numeric(inequality$gini)
+inequality$growth <- as.numeric(inequality$growth)
+
+ggplot(data = inequality, aes(x=gini, y=growth)) + geom_point()
+summary(lm(growth~gini, data=inequality))
 ```
 
